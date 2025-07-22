@@ -2,7 +2,10 @@
 Implementing Linear (3 tapes) Turing Machine to recognize L = {0^k 1^k 2^k | k ≥ 0}
 
 The algorithm is as follows:
-
+- The chain is written on first tape
+- Then when '1' is found, is written on 2nd tape 
+- Then '2's are written on 3rd tape 
+- The quantity of 2nd and 3rd tapes are compared with the quantity of '2's of first tape
 """
 
 def load_chain(w):
@@ -72,85 +75,77 @@ def print_tapes_three(tape1, tape2, tape3, head1, head2, head3):
     print(f"{spaces3}^")
     print()
 
-
 def do_transition_three(
     head1, head2, head3, state, symbol1, symbol2, symbol3, tape1, tape2, tape3
 ):
-    written1, written2, written3 = (
-        symbol1,
-        symbol2,
-        symbol3,
-    )  # Default
+    # Valores‑padrão (não escreve nada, não move)
+    written1, written2, written3 = symbol1, symbol2, symbol3
     new_state = state
-    dir1, dir2, dir3 = "S", "S", "S"  # Don't move
+    dir1 = dir2 = dir3 = "S"
 
-    if state == "q0":  # Reads 0s and copy to tape 2
-        if symbol1 == "$":  # Skip start marker
-            dir1 = "R"
+    # ---------------------- CÓPIA DOS 0s ----------------------
+    if state == "q0":
+        if symbol1 == "$":
+            dir1 = "R"  # pula marcador
         elif symbol1 == "0":
-            written2 = "0"  # Copy 0 to tape 2
-            dir1, dir2 = "R", "R"
+            written2 = "0"  # copia 0 p/ fita‑2
+            dir1 = dir2 = "R"
         elif symbol1 == "1":
-            new_state = "q1"  # Switch to reading 1s
-        elif symbol1 == "_":  # Empty string (only $ followed by _)
-            new_state = "q2"  # Go directly to marking phase
+            new_state = "q1"  # passou p/ parte dos 1s
+        elif symbol1 == "_":  # string vazia
+            new_state = "q2"
         else:
             new_state = "qrej"
 
-    elif state == "q1":  # Read 1s and copy to tape 3
+    # ---------------------- CÓPIA DOS 1s ----------------------
+    elif state == "q1":
         if symbol1 == "1":
-            written3 = "1"  # Copy 1 to tape 3
-            dir1, dir3 = "R", "R"
+            written3 = "1"  # copia 1 p/ fita‑3
+            dir1 = dir3 = "R"
         elif symbol1 == "2":
-            new_state = "q2"  # Switch to reading 2s
-        elif symbol1 == "_":  # No 2s found
-            new_state = "qrej"
+            new_state = "q2"  # hora de comparar
         else:
             new_state = "qrej"
 
-    elif state == "q2":  # Mark first 2 and prepare for comparison
-        if symbol1 == "2":
-            written1 = "$"  # Mark first 2
-            dir1 = "R"
-            new_state = "q3"  # Move to return phase
-        elif symbol1 == "_":  # Empty case (0^k 1^k with k=0)
-            new_state = "q3"  # Go to return phase
+    # ---------- rebobinar fitas 2 e 3 até o "$" -------------
+    elif state == "q2":
+        # Volta as cabeças até encontrar o marcador $
+        if symbol2 != "$":
+            dir2 = "L"
+        if symbol3 != "$":
+            dir3 = "L"
+
+        # Quando ambas voltarem ao $, avança‑as 1 passo e começa a comparar
+        if symbol2 == "$" and symbol3 == "$":
+            dir2 = dir3 = "R"
+            new_state = "q3"
+
+        dir1 = "S"  # fita‑1 já está no primeiro 2 (ou no _ se k == 0)
+
+    # -------------------- COMPARAÇÃO --------------------------
+    elif state == "q3":
+        if symbol1 == "2" and symbol2 == "0" and symbol3 == "1":
+            dir1 = dir2 = dir3 = "R"  # contagem bateu: avança
+        elif symbol1 == "_" and symbol2 == "_" and symbol3 == "_":
+            new_state = "qacc"  # todas esgotadas
         else:
-            new_state = "qrej"
+            new_state = "qrej"  # qualquer divergência
 
-    elif state == "q3":  # Return heads 2 and 3 to start positions
-        if head2 > 1 or head3 > 1:  # Return tapes 2 and 3 to start
-            if head2 > 1:
-                dir2 = "L"
-            if head3 > 1:
-                dir3 = "L"
-        else:
-            # Tapes 2 and 3 at start, move to first data position
-            if tape2[1] != "_" or tape3[1] != "_":  # Have data to compare
-                dir2, dir3 = "R", "R"
-                new_state = "q4"
-            else:  # Empty case, check if tape1 also empty
-                if symbol1 == "_":
-                    new_state = "qacc"  # Accept empty string
-                else:
-                    new_state = "qrej"
+    # -------------------- Estados finais ---------------------
+    # (qacc e qrej apenas mantêm‑se)
 
-    elif state == "q4":  # Compare 0s, 1s, and 2s counts
-        if symbol2 == "0" and symbol3 == "1" and symbol1 == "2":
-            # All three symbols present, advance all
-            dir1, dir2, dir3 = "R", "R", "R"
-        elif symbol2 == "_" and symbol3 == "_" and symbol1 == "_":
-            # All reached end simultaneously - accept
-            new_state = "qacc"
-        else:
-            # Counts don't match - reject
-            new_state = "qrej"
+    # Grava e move as cabeças
+    tape1 = write_symbol(head1, tape1, written1)
+    tape2 = write_symbol(head2, tape2, written2)
+    tape3 = write_symbol(head3, tape3, written3)
 
-    elif state == "qacc":  # Accept state
-        pass  # Stay in accept state
+    if dir1 != "S":
+        head1 = move_head(tape1, head1, dir1)
+    if dir2 != "S":
+        head2 = move_head(tape2, head2, dir2)
+    if dir3 != "S":
+        head3 = move_head(tape3, head3, dir3)
 
-    elif state == "qrej":  # Reject state
-        pass  # Stay in reject state
 
     print_configuration_three(
         state,
@@ -165,17 +160,6 @@ def do_transition_three(
         dir2,
         dir3,
     )
-
-    tape1 = write_symbol(head1, tape1, written1)
-    tape2 = write_symbol(head2, tape2, written2)
-    tape3 = write_symbol(head3, tape3, written3)
-
-    if dir1 != "S":
-        head1 = move_head(tape1, head1, dir1)
-    if dir2 != "S":
-        head2 = move_head(tape2, head2, dir2)
-    if dir3 != "S":
-        head3 = move_head(tape3, head3, dir3)
 
     print_tapes_three(tape1, tape2, tape3, head1, head2, head3)
 

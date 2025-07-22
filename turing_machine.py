@@ -16,6 +16,8 @@ def load_chain_single(w):
 
 def write_symbol(head, tape, new_symbol):
     if head < len(tape):
+        if new_symbol == '_':
+            return tape
         tape[head] = new_symbol
     return tape
 
@@ -29,7 +31,7 @@ def move_head_single(tape, head, direction):
         direction == "L" and head > 0
     ):  # Moves for left if is not the start of the tape
         head -= 1
-    elif direction == "L" and head == 0:  # When there's some verification going on #change for S
+    elif direction == "L" and head == 0:  # When qacc or qrej
         return
     return head
 
@@ -51,7 +53,7 @@ def print_current_tape(tape, head):
 
 
 def do_transition_single(head, state, symbol, tape):
-    written_symbol = symbol  # For default, doesn't write anything
+    written_symbol = '_'  # For default, doesn't write anything
     new_state = state  # And don't change state
     direction = "L"  # For final states
 
@@ -152,8 +154,7 @@ def do_transition_single(head, state, symbol, tape):
 
 
 def process_turing_machine(w):
-    """Processa a cadeia usando uma fita"""
-    print(f"\n=== PROCESSANDO COM UMA FITA: '{w}' ===")
+    print(f"\n=== PROCESSING WITH THREE TAPES: '{w}' ===")
 
     tape = load_chain_single(w)
     current_state = "q0"
@@ -163,12 +164,13 @@ def process_turing_machine(w):
     print_current_tape(tape, head)
 
     while current_state not in ["qacc", "qrej"]:
+        print(f"\n      === {steps + 1}th STEP ===\n")
         current_symbol = tape[head]
         head, tape, current_state = do_transition_single(
             head, current_state, current_symbol, tape
         )
         steps += 1
 
-    result = "ACEITA" if current_state == "qacc" else "REJEITA"
-    print(f"Resultado: {result} (em {steps} passos)")
-    return current_state == "qacc"
+    result = "ACCEPT" if current_state == "qacc" else "REJECT"
+    print(f"Result: {result}")
+    print(f"Complexity: {steps} steps")
