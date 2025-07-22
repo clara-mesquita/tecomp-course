@@ -10,11 +10,11 @@ The algorithm is as follows:
 
 
 def load_chain_single(w):
-    tape = ["$"] + list(w) + ["_"]  # Using '$' to mark start and '_' to mark end
+    tape = ["$"] + list(w) + ["_"]  # Using '$' to indicate start and '_' to end
     return tape
 
 
-def write_symbol(head, tape, new_symbol):
+def write_symbol(head, tape, new_symbol): # Write symbol on tape
     if head < len(tape):
         if new_symbol == '_':
             return tape
@@ -22,7 +22,7 @@ def write_symbol(head, tape, new_symbol):
     return tape
 
 
-def move_head_single(tape, head, direction):
+def move_head(tape, head, direction):
     if (
         direction == "R" and head < len(tape) - 1
     ):  # Moves for right in tape if is not the end of the tape
@@ -35,12 +35,11 @@ def move_head_single(tape, head, direction):
         return
     return head
 
-
 def print_configuration_single(
     prev_state, symbol, current_state, written_symbol, direction
 ):
     print(
-        f"      Config: {prev_state} ---{symbol}, {written_symbol}/{direction}---> {current_state}\n"
+        f"      Config: {prev_state} ---{symbol} -> {written_symbol},{direction}---> {current_state}\n"
     )
 
 
@@ -61,7 +60,7 @@ def do_transition_single(head, state, symbol, tape):
         if symbol == "$":  # Tape start
             direction = "R"
         elif symbol == "_":  # Handle empty chain (k == 0)
-            new_state = "qacc"
+            new_state = "qacc" 
         elif symbol == "0":  # Marks
             written_symbol = "X"
             direction = "R"
@@ -69,7 +68,7 @@ def do_transition_single(head, state, symbol, tape):
         elif symbol == "X":
             direction = "R"
             new_state = "q4"
-        else:
+        else: # if reads '1', '2'
             new_state = "qrej"
 
     elif state == "q1":  # Searchs for '1'
@@ -83,7 +82,7 @@ def do_transition_single(head, state, symbol, tape):
             new_state = "q2"
         elif symbol == "_":  # Didn't find any '1'
             new_state = "qrej"
-        else:
+        else: # if reads '2' or '1'
             new_state = "qrej"
 
     elif state == "q2":  # Searchs for '2'
@@ -97,7 +96,7 @@ def do_transition_single(head, state, symbol, tape):
             new_state = "q3"
         elif symbol == "_":  # Didn't find any '2'
             new_state = "qrej"
-        else:
+        else:  # if reads '0' or '1'
             new_state = "qrej"
 
     elif state == "q3":
@@ -147,7 +146,7 @@ def do_transition_single(head, state, symbol, tape):
 
     print_configuration_single(state, symbol, new_state, written_symbol, direction)
     tape = write_symbol(head, tape, written_symbol)
-    head = move_head_single(tape, head, direction)
+    head = move_head(tape, head, direction)
     print_current_tape(tape, head)
 
     return head, tape, new_state

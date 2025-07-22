@@ -4,7 +4,7 @@ from linear_turing_machine import process_turing_machine_3tapes
 
 def main():
     print("Turing Machine Simulator")
-    print("Language: L = {0^k 1^k 2^k | k ≥ 0}")
+    print("Language: L = {0^k 1^k 2^k | k >= 0}")
     print("=" * 50)
 
     while True:

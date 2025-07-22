@@ -31,7 +31,7 @@ def move_head(tape, head, direction):
             tape.append("_")
     elif direction == "L" and head > 0:
         head -= 1
-    elif direction == "S": # Head don't move 
+    elif direction == "_": # Head don't move 
         return head
     return head
 
@@ -50,9 +50,9 @@ def print_configuration_three(
     dir3,
 ):
     print(
-        f"      Config Tape 1: ({prev_state}) --({symbol1} → {written1}, {dir1})--> ({current_state})\n"
-        f"      Config Tape 2: ({prev_state}) --({symbol2} → {written2}, {dir2})--> ({current_state})\n"
-        f"      Config Tape 3: ({prev_state}) --({symbol3} → {written3}, {dir3})--> ({current_state})\n\n"
+        f"      Config Tape 1: ({prev_state}) --({symbol1} -> {written1}, {dir1})--> ({current_state})\n"
+        f"      Config Tape 2: ({prev_state}) --({symbol2} -> {written2}, {dir2})--> ({current_state})\n"
+        f"      Config Tape 3: ({prev_state}) --({symbol3} -> {written3}, {dir3})--> ({current_state})\n\n"
     )
 
 
@@ -81,60 +81,55 @@ def do_transition_three(
     # Valores‑padrão (não escreve nada, não move)
     written1, written2, written3 = symbol1, symbol2, symbol3
     new_state = state
-    dir1 = dir2 = dir3 = "S"
+    dir1 = dir2 = dir3 = "_"
 
-    # ---------------------- CÓPIA DOS 0s ----------------------
     if state == "q0":
         if symbol1 == "$":
-            dir1 = "R"  # pula marcador
+            dir1 = "R"  
         elif symbol1 == "0":
-            written2 = "0"  # copia 0 p/ fita‑2
+            written2 = "0"  # copy 0
             dir1 = dir2 = "R"
         elif symbol1 == "1":
-            new_state = "q1"  # passou p/ parte dos 1s
-        elif symbol1 == "_":  # string vazia
+            new_state = "q1" # found 1 
+        elif symbol1 == "_":  # Handle empty chain (k == 0)
             new_state = "q2"
         else:
             new_state = "qrej"
 
-    # ---------------------- CÓPIA DOS 1s ----------------------
+    # '1's copy
     elif state == "q1":
         if symbol1 == "1":
-            written3 = "1"  # copia 1 p/ fita‑3
+            written3 = "1" 
             dir1 = dir3 = "R"
         elif symbol1 == "2":
-            new_state = "q2"  # hora de comparar
+            new_state = "q2"  
         else:
             new_state = "qrej"
 
-    # ---------- rebobinar fitas 2 e 3 até o "$" -------------
+    # return tapes to start
     elif state == "q2":
-        # Volta as cabeças até encontrar o marcador $
+        # tape 1 and tape 2 go back to start ($)
         if symbol2 != "$":
             dir2 = "L"
         if symbol3 != "$":
             dir3 = "L"
 
         # Quando ambas voltarem ao $, avança‑as 1 passo e começa a comparar
+        # when both return to $ starts to compare 
         if symbol2 == "$" and symbol3 == "$":
             dir2 = dir3 = "R"
             new_state = "q3"
 
-        dir1 = "S"  # fita‑1 já está no primeiro 2 (ou no _ se k == 0)
+        dir1 = "_"  
 
-    # -------------------- COMPARAÇÃO --------------------------
-    elif state == "q3":
+    elif state == "q3": # Comparing quantities 
         if symbol1 == "2" and symbol2 == "0" and symbol3 == "1":
-            dir1 = dir2 = dir3 = "R"  # contagem bateu: avança
+            dir1 = dir2 = dir3 = "R"  # quantity ok
         elif symbol1 == "_" and symbol2 == "_" and symbol3 == "_":
-            new_state = "qacc"  # todas esgotadas
+            new_state = "qacc"  # All symbols counted 
         else:
-            new_state = "qrej"  # qualquer divergência
+            new_state = "qrej"  
 
-    # -------------------- Estados finais ---------------------
-    # (qacc e qrej apenas mantêm‑se)
-
-    # Grava e move as cabeças
     tape1 = write_symbol(head1, tape1, written1)
     tape2 = write_symbol(head2, tape2, written2)
     tape3 = write_symbol(head3, tape3, written3)
@@ -198,6 +193,6 @@ def process_turing_machine_3tapes(w):
         steps += 1
 
     result = "ACCEPT" if current_state == "qacc" else "REJECT"
-    print(f"Result: {result} (in {steps} steps)")
-    return current_state == "qacc"
+    print(f"Result: {result}")
+    print(f"Complexity: {steps} steps")
 
